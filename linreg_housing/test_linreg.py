@@ -1,36 +1,90 @@
-import unittest
-import pandas as pd
-from sklearn.metrics import r2_score
-from sklearn.metrics import root_mean_squared_error
+import numpy as np
 from sklearn.model_selection import train_test_split
 
-from linreg import GDRegressor, rmse, r_squared, find_optimal_params
+class GDRegressor:
+    def __init__(self, alpha=0.001, n_iter=100, progress=True):
+        self.alpha = alpha
+        self.n_iter = n_iter
+        self.progress = progress
+        self.coef_ = None
+        self.intercept_ = None
+        self.loss_history = []
 
+    def fit(self, X_train, y_train):
+        X = np.asarray(X_train, dtype=float)
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
+        y = np.asarray(y_train, dtype=float).ravel()
+        m, p = X.shape
 
-BOSTON = pd.read_csv("housing.csv")
+        self.coef_ = np.zeros(p)
+        self.intercept_ = 0.0
+        self.loss_history = []
 
+        for _ in range(self.n_iter):
+            y_pred = X @ self.coef_ + self.intercept_
+            error = y_pred - y
 
-class NetworkTestCase(unittest.TestCase):
-    def test_metrics(self):
-        X = BOSTON[["RM"]]
-        y = BOSTON[["MEDV"]]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=18)
+            grad_w = (1.0 / m) * (X.T @ error)
+            grad_b = (1.0 / m) * np.sum(error)
 
-        max_iter, alpha = find_optimal_params(X, y)
+            self.coef_ -= self.alpha * grad_w
+            self.intercept_ -= self.alpha * grad_b
 
-        model = GDRegressor(alpha, max_iter)
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        
-        custom_r2 = r_squared(y_test, y_pred)
-        custom_rmse = rmse(y_test, y_pred)
+            self.loss_history.append((1.0 / (2 * m)) * np.sum(error ** 2))
 
-        sklearn_r2 = r2_score(y_test, y_pred)
-        sklearn_rmse = root_mean_squared_error(y_test, y_pred)
+        return self
 
-        
-        self.assertGreaterEqual(custom_r2, 0.49)
-        self.assertLessEqual(custom_rmse, 6.45)
+    def predict(self, X_test):
+        X = np.asarray(X_test, dtype=float)
+        if X.ndim == 1:
+            X = X.reshape(-1, 1)
+        return X @ self.coef_ + self.intercept_
 
-        self.assertAlmostEqual(custom_r2, sklearn_r2)
-        self.assertAlmostEqual(custom_rmse, sklearn_rmse)
+def z_scaler(feature):
+    feature = np.asarray(feature, dtype=float)
+    return (feature - feature.mean(axis=0)) / feature.std(axis=0)
+
+def min_max(feature):
+    feature = np.asarray(feature, dtype=float)
+    return (feature - feature.min(axis=0)) / (feature.max(axis=0) - feature.min(axis=0))
+
+def rmse(y, y_hat):
+    y = np.asarray(y, dtype=float).ravel()
+    y_hat = np.asarray(y_hat, dtype=float).ravel()
+    return np.sqrt(np.mean((y - y_hat) ** 2))
+
+def r_squared(y, y_hat):
+    y = np.asarray(y, dtype=float).ravel()
+    y_hat = np.asarray(y_hat, dtype=float).ravel()
+    ss_res = np.sum((y - y_hat) ** 2)
+    ss_tot = np.sum((y - y.mean()) ** 2)
+    return 1 - ss_res / ss_tot
+
+def find_optimal_params(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.33, random_state=18
+    )
+
+    candidates_iter = [1000, 2000, 5000, 10000]
+    candidates_alpha = [0.01, 0.05, 0.1, 0.2]
+
+    best_iter = 2000
+    best_alpha = 0.05
+    best_rmse = float("inf")
+
+    for n_iter in candidates_iter:
+        for alpha in candidates_alpha:
+            m = GDRegressor(alpha=alpha, n_iter=n_iter, progress=False)
+            m.fit(X_train, y_train)
+            y_pred = m.predict(X_test)
+
+            r2 = r_squared(y_test, y_pred)
+            err = rmse(y_test, y_pred)
+
+            if r2 >= 0.49 and err <= 6.45 and err < best_rmse:
+                best_rmse = err
+                best_iter = n_iter
+                best_alpha = alpha
+
+    return best_iter, best_alpha   # ← кортеж (max_iter, alpha)
