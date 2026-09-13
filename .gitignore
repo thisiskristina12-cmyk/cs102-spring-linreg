@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+.idea/
+.cache/
+.cache.sqlite
+*.sqlite
+__pycache__/
+weather_prediction/data/weather_dataset.csv

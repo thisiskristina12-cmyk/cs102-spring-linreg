@@ -41,11 +41,16 @@ def training(
     )
     save_dataset(data, DATASET_PATH)
 
-    reg, metrics, anomalies, scaler = # PUT YOUR CODE HERE
+    reg, metrics, anomalies, scaler = reg, metrics, anomalies, scaler = train_model(data)
     MODEL = reg
     METRICS = metrics
     SCALER = scaler
-    WEIGHTS = # PUT YOUR CODE HERE
+    WEIGHTS = {
+        FEATURE_COLUMNS[0]: float(reg.coef_[0]),
+        FEATURE_COLUMNS[1]: float(reg.coef_[1]),
+        FEATURE_COLUMNS[2]: float(reg.coef_[2]),
+        "intercept": float(reg.intercept_),
+    }
     WORST_RECORDS = anomalies.to_dict(orient="records")
     LAST_PREDICTION = None
     TRAINING_CONFIG = {
@@ -83,7 +88,8 @@ def index():
                     ]
                 ]
             )
-            LAST_PREDICTION = # PUT YOUR CODE HERE
+            user_input_scaled = SCALER.transform(user_input)
+            LAST_PREDICTION = float(MODEL.predict(user_input_scaled)[0])
 
     return render_template(
         "index.html",
@@ -98,11 +104,16 @@ def index():
 if __name__ == "__main__":
     if DATASET_PATH.exists():
         data = pd.read_csv(DATASET_PATH, parse_dates=["date"])
-        reg, metrics, anomalies, scaler = # PUT YOUR CODE HERE
+        reg, metrics, anomalies, scaler = reg, metrics, anomalies, scaler = train_model(data)
         MODEL = reg
         METRICS = metrics
         SCALER = scaler
-        WEIGHTS = # PUT YOUR CODE HERE
+        WEIGHTS = {
+            FEATURE_COLUMNS[0]: float(reg.coef_[0]),
+            FEATURE_COLUMNS[1]: float(reg.coef_[1]),
+            FEATURE_COLUMNS[2]: float(reg.coef_[2]),
+            "intercept": float(reg.intercept_),
+        }
         WORST_RECORDS = anomalies.to_dict(orient="records")
     else:
         training(
