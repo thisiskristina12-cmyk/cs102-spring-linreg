@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 
+
 class GDRegressor:
     def __init__(self, alpha=0.001, n_iter=100, progress=True):
         self.alpha = alpha
@@ -31,7 +32,7 @@ class GDRegressor:
             self.coef_ -= self.alpha * grad_w
             self.intercept_ -= self.alpha * grad_b
 
-            self.loss_history.append((1.0 / (2 * m)) * np.sum(error ** 2))
+            self.loss_history.append((1.0 / (2 * m)) * np.sum(error**2))
 
         return self
 
@@ -41,18 +42,22 @@ class GDRegressor:
             X = X.reshape(-1, 1)
         return X @ self.coef_ + self.intercept_
 
+
 def z_scaler(feature):
     feature = np.asarray(feature, dtype=float)
     return (feature - feature.mean(axis=0)) / feature.std(axis=0)
+
 
 def min_max(feature):
     feature = np.asarray(feature, dtype=float)
     return (feature - feature.min(axis=0)) / (feature.max(axis=0) - feature.min(axis=0))
 
+
 def rmse(y, y_hat):
     y = np.asarray(y, dtype=float).ravel()
     y_hat = np.asarray(y_hat, dtype=float).ravel()
     return np.sqrt(np.mean((y - y_hat) ** 2))
+
 
 def r_squared(y, y_hat):
     y = np.asarray(y, dtype=float).ravel()
@@ -61,10 +66,9 @@ def r_squared(y, y_hat):
     ss_tot = np.sum((y - y.mean()) ** 2)
     return 1 - ss_res / ss_tot
 
+
 def find_optimal_params(X, y):
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.33, random_state=18
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=18)
 
     candidates_iter = [5000, 10000, 20000]
     candidates_alpha = [0.003, 0.005, 0.008, 0.01]
