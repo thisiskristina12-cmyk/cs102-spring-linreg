@@ -27,10 +27,10 @@ jobs:
         python -m unittest discover ${{ github.head_ref }}
     - name: Run black
       run: |
-        black -l 120 --check --diff --color --exclude "test*" /linreg_housing
+        black -l 120 --check --diff --color --exclude "test*" linreg_housing
     - name: Run mypy
       run: |
-        mypy --ignore-missing-imports /linreg_housing
+        mypy --ignore-missing-imports linreg_housing
     - name: Run pylint
       run: |
-        pylint --disable=missing-docstring --variable-rgx="[a-z0-9_]{1,30}$" --argument-rgx="^[a-z][a-z0-9]*((_[a-z0-9]+)*)?$" --ignore-patterns="test_.*?py" --exit-zero /linreg_housing
+        pylint --disable=missing-docstring --variable-rgx="[a-z0-9_]{1,30}$" --argument-rgx="^[a-z][a-z0-9]*((_[a-z0-9]+)*)?$" --ignore-patterns="test_.*?py" --exit-zero linreg_housing
